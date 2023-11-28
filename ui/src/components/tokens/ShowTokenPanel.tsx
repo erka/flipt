@@ -4,15 +4,10 @@ import {
   ClipboardDocumentIcon,
   LockClosedIcon
 } from '@heroicons/react/24/outline';
-import hljs from 'highlight.js';
-import text from 'highlight.js/lib/languages/plaintext';
-import 'highlight.js/styles/tokyo-night-dark.css';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Button from '~/components/forms/buttons/Button';
 import { IAuthTokenSecret } from '~/types/auth/Token';
 import { classNames, copyTextToClipboard } from '~/utils/helpers';
-
-hljs.registerLanguage('text', text);
 
 type ShowTokenPanelProps = {
   setOpen: (open: boolean) => void;
@@ -23,10 +18,6 @@ export default function ShowTokenPanel(props: ShowTokenPanelProps) {
   const { setOpen, token } = props;
   const [copied, setCopied] = useState(false);
   const [copiedText, setCopiedText] = useState(token?.clientToken);
-
-  useEffect(() => {
-    hljs.initHighlighting();
-  }, [token]);
 
   return (
     <>
@@ -55,7 +46,14 @@ export default function ShowTokenPanel(props: ShowTokenPanelProps) {
           </div>
           <div className="m-auto mt-4 flex content-center bg-[#1a1b26]">
             <div className="m-auto flex">
-              <pre className="p-2 text-sm md:h-full">
+              <pre
+                className="p-2 text-sm md:h-full"
+                style={{
+                  background: '#1a1b26',
+                  color: '#9aa5ce',
+                  padding: '1.5em'
+                }}
+              >
                 <code className="text rounded-sm md:h-full">{copiedText}</code>
               </pre>
               {token?.clientToken && (

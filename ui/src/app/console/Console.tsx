@@ -1,9 +1,7 @@
 import { ArrowPathIcon } from '@heroicons/react/20/solid';
 import { Form, Formik, useFormikContext } from 'formik';
-import hljs from 'highlight.js';
-import javascript from 'highlight.js/lib/languages/json';
-import 'highlight.js/styles/tomorrow-night-bright.css';
-import React, { useCallback, useEffect, useState } from 'react';
+import * as monaco from 'monaco-editor';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
@@ -29,8 +27,6 @@ import {
 } from '~/types/Flag';
 import { INamespace } from '~/types/Namespace';
 import { classNames, getErrorMessage } from '~/utils/helpers';
-
-hljs.registerLanguage('json', javascript);
 
 function ResetOnNamespaceChange({ namespace }: { namespace: INamespace }) {
   const { resetForm } = useFormikContext();
@@ -58,6 +54,7 @@ export default function Console() {
   const navigate = useNavigate();
 
   const namespace = useSelector(selectCurrentNamespace);
+  const codeRef = useRef(null);
 
   const loadData = useCallback(async () => {
     const initialFlagList = (await listFlags(namespace.key)) as IFlagList;
@@ -111,7 +108,12 @@ export default function Console() {
   };
 
   useEffect(() => {
-    hljs.highlightAll();
+    if (codeRef.current) {
+      monaco.editor.colorizeElement(codeRef.current, {
+        mimeType: 'json',
+        theme: 'tmrw'
+      });
+    }
   }, [response]);
 
   useEffect(() => {
@@ -234,15 +236,17 @@ export default function Console() {
             </div>
             <div className="mt-8 w-full overflow-hidden md:w-1/2 md:pl-4">
               {response && (
-                <pre className="p-2 text-sm md:h-full">
-                  <code
-                    className={classNames(
-                      hasEvaluationError ? 'border-red-400 border-4' : '',
-                      'json rounded-sm md:h-full'
-                    )}
-                  >
-                    {response as React.ReactNode}
-                  </code>
+                <pre
+                  style={{
+                    fontFamily: "Menlo, Monaco, 'Courier New', monospace"
+                  }}
+                  className={classNames(
+                    hasEvaluationError ? 'border-red-400 border-4' : '',
+                    'monaco-editor rounded-sm rounded-sm p-2 text-sm md:h-full'
+                  )}
+                  ref={codeRef}
+                >
+                  {response}
                 </pre>
               )}
               {!response && (
