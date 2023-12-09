@@ -147,6 +147,8 @@ func (c *AuthenticationConfig) validate() error {
 		if info.Cleanup.GracePeriod <= 0 {
 			return errFieldWrap(field+".cleanup.grace_period", errPositiveNonZeroDuration)
 		}
+
+		return info.validate()
 	}
 
 	// ensure that when a session compatible authentication method has been
@@ -245,6 +247,8 @@ type StaticAuthenticationMethodInfo struct {
 
 	// used for bootstrapping defaults
 	setDefaults func(map[string]any)
+	// used for auth method specific validation
+	validate func() error
 
 	// used for testing purposes to ensure all methods
 	// are appropriately cleaned up via the background process.
@@ -284,6 +288,7 @@ func (a AuthenticationMethodInfo) Name() string {
 type AuthenticationMethodInfoProvider interface {
 	setDefaults(map[string]any)
 	info() AuthenticationMethodInfo
+	validate() error
 }
 
 // AuthenticationMethod is a container for authentication methods.
@@ -309,6 +314,7 @@ func (a *AuthenticationMethod[C]) info() StaticAuthenticationMethodInfo {
 		Cleanup:                  a.Cleanup,
 
 		setDefaults: a.setDefaults,
+		validate:    a.validate,
 		setEnabled: func() {
 			a.Enabled = true
 		},
@@ -316,6 +322,14 @@ func (a *AuthenticationMethod[C]) info() StaticAuthenticationMethodInfo {
 			a.Cleanup = &c
 		},
 	}
+}
+
+func (a *AuthenticationMethod[C]) validate() error {
+	if !a.Enabled {
+		return nil
+	}
+
+	return a.Method.validate()
 }
 
 // AuthenticationMethodTokenConfig contains fields used to configure the authentication
@@ -335,6 +349,8 @@ func (a AuthenticationMethodTokenConfig) info() AuthenticationMethodInfo {
 		SessionCompatible: false,
 	}
 }
+
+func (a AuthenticationMethodTokenConfig) validate() error { return nil }
 
 // AuthenticationMethodTokenBootstrapConfig contains fields used to configure the
 // bootstrap process for the authentication method "token".
@@ -379,6 +395,8 @@ func (a AuthenticationMethodOIDCConfig) info() AuthenticationMethodInfo {
 
 	return info
 }
+
+func (a AuthenticationMethodOIDCConfig) validate() error { return nil }
 
 // AuthenticationOIDCProvider configures provider credentials
 type AuthenticationMethodOIDCProvider struct {
@@ -426,6 +444,8 @@ func (a AuthenticationMethodKubernetesConfig) info() AuthenticationMethodInfo {
 	}
 }
 
+func (a AuthenticationMethodKubernetesConfig) validate() error { return nil }
+
 // AuthenticationMethodGithubConfig contains configuration and information for completing an OAuth
 // 2.0 flow with GitHub as a provider.
 type AuthenticationMethodGithubConfig struct {
@@ -453,4 +473,18 @@ func (a AuthenticationMethodGithubConfig) info() AuthenticationMethodInfo {
 	info.Metadata, _ = structpb.NewStruct(metadata)
 
 	return info
+}
+
+func (a AuthenticationMethodGithubConfig) validate() error {
+	// ensure scopes contain read:org if allowed organizations is not empty
+	if len(a.AllowedOrganizations) > 0 {
+		for _, scope := range a.Scopes {
+			if scope == "read:org" {
+				return nil
+			}
+		}
+
+		return fmt.Errorf("scopes must contain read:org when allowed_organizations is not empty")
+	}
+	return nil
 }
