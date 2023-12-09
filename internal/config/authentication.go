@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"net/url"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -477,14 +478,9 @@ func (a AuthenticationMethodGithubConfig) info() AuthenticationMethodInfo {
 
 func (a AuthenticationMethodGithubConfig) validate() error {
 	// ensure scopes contain read:org if allowed organizations is not empty
-	if len(a.AllowedOrganizations) > 0 {
-		for _, scope := range a.Scopes {
-			if scope == "read:org" {
-				return nil
-			}
-		}
-
+	if len(a.AllowedOrganizations) > 0 && !slices.Contains(a.Scopes, "read:org") {
 		return fmt.Errorf("scopes must contain read:org when allowed_organizations is not empty")
 	}
+
 	return nil
 }
