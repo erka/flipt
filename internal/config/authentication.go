@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hashicorp/go-multierror"
 	"github.com/spf13/viper"
 	"go.flipt.io/flipt/rpc/flipt/auth"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -136,7 +135,6 @@ func (c *AuthenticationConfig) SessionEnabled() bool {
 func (c *AuthenticationConfig) validate() error {
 	var (
 		sessionEnabled bool
-		errs           *multierror.Error
 	)
 
 	for _, info := range c.Methods.AllMethods() {
@@ -152,10 +150,6 @@ func (c *AuthenticationConfig) validate() error {
 
 		if info.Cleanup.GracePeriod <= 0 {
 			return errFieldWrap(field+".cleanup.grace_period", errPositiveNonZeroDuration)
-		}
-
-		if err := info.validate(); err != nil {
-			errs = multierror.Append(errs, err)
 		}
 	}
 
@@ -179,7 +173,13 @@ func (c *AuthenticationConfig) validate() error {
 		c.Session.Domain = host
 	}
 
-	return errs.ErrorOrNil()
+	for _, info := range c.Methods.AllMethods() {
+		if err := info.validate(); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func getHostname(rawurl string) (string, error) {
