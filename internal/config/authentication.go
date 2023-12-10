@@ -133,9 +133,7 @@ func (c *AuthenticationConfig) SessionEnabled() bool {
 }
 
 func (c *AuthenticationConfig) validate() error {
-	var (
-		sessionEnabled bool
-	)
+	var sessionEnabled bool
 
 	for _, info := range c.Methods.AllMethods() {
 		sessionEnabled = sessionEnabled || (info.Enabled && info.SessionCompatible)
