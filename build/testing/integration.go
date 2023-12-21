@@ -300,7 +300,7 @@ func s3(ctx context.Context, client *dagger.Client, base, flipt *dagger.Containe
 		WithEnvVariable("MINIO_ROOT_USER", "user").
 		WithEnvVariable("MINIO_ROOT_PASSWORD", "password").
 		WithEnvVariable("MINIO_BROWSER", "off").
-		WithExec([]string{"server", "/data", "--address", ":9009"})
+		WithExec([]string{"server", "/data", "--address", ":9009", "--quiet"})
 
 	_, err := base.
 		WithServiceBinding("minio", minio.AsService()).
@@ -503,7 +503,7 @@ func azblob(ctx context.Context, client *dagger.Client, base, flipt *dagger.Cont
 	azurite := client.Container().
 		From("mcr.microsoft.com/azure-storage/azurite").
 		WithExposedPort(10000).
-		WithExec([]string{"azurite-blob", "--blobHost", "0.0.0.0"}).
+		WithExec([]string{"azurite-blob", "--blobHost", "0.0.0.0", "--silent"}).
 		AsService()
 
 	_, err := base.
