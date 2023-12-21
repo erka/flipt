@@ -194,7 +194,7 @@ func withPostgres(fn testCaseFn) testCaseFn {
 		return fn(ctx, client, base, flipt.
 			WithEnvVariable("FLIPT_DB_URL", "postgres://postgres:password@postgres:5432?sslmode=disable").
 			WithServiceBinding("postgres", client.Container().
-				From("postgres").
+				From("postgres:alpine").
 				WithEnvVariable("POSTGRES_PASSWORD", "password").
 				WithExposedPort(5432).
 				WithEnvVariable("UNIQUE", uuid.New().String()).
@@ -299,6 +299,7 @@ func s3(ctx context.Context, client *dagger.Client, base, flipt *dagger.Containe
 		WithExposedPort(9009).
 		WithEnvVariable("MINIO_ROOT_USER", "user").
 		WithEnvVariable("MINIO_ROOT_PASSWORD", "password").
+		WithEnvVariable("MINIO_BROWSER", "off").
 		WithExec([]string{"server", "/data", "--address", ":9009"})
 
 	_, err := base.

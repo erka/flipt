@@ -10,7 +10,7 @@ import (
 func Unit(ctx context.Context, client *dagger.Client, flipt *dagger.Container) error {
 	// create Redis service container
 	redisSrv := client.Container().
-		From("redis").
+		From("redis:alpine").
 		WithExposedPort(6379).
 		WithExec(nil)
 
@@ -38,6 +38,7 @@ func Unit(ctx context.Context, client *dagger.Client, flipt *dagger.Container) e
 		WithExposedPort(9009).
 		WithEnvVariable("MINIO_ROOT_USER", "user").
 		WithEnvVariable("MINIO_ROOT_PASSWORD", "password").
+		WithEnvVariable("MINIO_BROWSER", "off").
 		WithExec([]string{"server", "/data", "--address", ":9009"})
 
 	azurite := client.Container().
