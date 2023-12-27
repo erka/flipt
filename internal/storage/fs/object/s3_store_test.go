@@ -1,4 +1,4 @@
-package s3
+package object
 
 import (
 	"bytes"
@@ -16,15 +16,11 @@ import (
 	"go.uber.org/zap/zaptest"
 )
 
-const testBucket = "testdata"
+const testS3Bucket = "testdata"
 
 var minioURL = os.Getenv("TEST_S3_ENDPOINT")
 
-func Test_Store_String(t *testing.T) {
-	require.Equal(t, "s3", (&SnapshotStore{}).String())
-}
-
-func Test_Store(t *testing.T) {
+func Test_S3_Store(t *testing.T) {
 	ch := make(chan struct{})
 	store, skip := testStore(t, WithPollOptions(
 		fs.WithInterval(time.Second),
@@ -37,6 +33,8 @@ func Test_Store(t *testing.T) {
 	if skip {
 		return
 	}
+
+	require.Equal(t, "s3", store.String())
 
 	// flag shouldn't be present until we update it
 	require.Error(t, store.View(func(s storage.ReadOnlyStore) error {
@@ -51,7 +49,7 @@ flags:
 
 	buf := bytes.NewReader(updated)
 
-	s3Client := testClient(t, store.region, store.endpoint)
+	s3Client := testS3Client(t, "minio", minioURL)
 	// update features.yml
 	path := "features.yml"
 	_, err := s3Client.PutObject(context.TODO(), &s3.PutObjectInput{
@@ -87,8 +85,8 @@ flags:
 
 }
 
-func Test_Store_WithPrefix(t *testing.T) {
-	store, skip := testStore(t, WithPrefix("prefix"))
+func Test_S3_Store_WithPrefix(t *testing.T) {
+	store, skip := testStore(t, WithBucket(testS3Bucket, "prefix"))
 	if skip {
 		return
 	}
@@ -111,9 +109,10 @@ func testStore(t *testing.T, opts ...containers.Option[SnapshotStore]) (*Snapsho
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 
-	source, err := NewSnapshotStore(ctx, zaptest.NewLogger(t), testBucket,
+	source, err := NewSnapshotStore(ctx, zaptest.NewLogger(t),
 		append([]containers.Option[SnapshotStore]{
-			WithEndpoint(minioURL),
+			WithFS("s3", S3FSURL(testS3Bucket, "minio", minioURL)),
+			WithBucket(testS3Bucket, ""),
 		},
 			opts...)...,
 	)
@@ -126,7 +125,7 @@ func testStore(t *testing.T, opts ...containers.Option[SnapshotStore]) (*Snapsho
 	return source, false
 }
 
-func testClient(t *testing.T, region string, endpoint string) *s3.Client {
+func testS3Client(t *testing.T, region string, endpoint string) *s3.Client {
 	t.Helper()
 	cfg, err := config.LoadDefaultConfig(context.Background(),
 		config.WithRegion(region))

@@ -1,4 +1,4 @@
-package azblob
+package object
 
 import (
 	"context"
@@ -19,13 +19,9 @@ const testContainer = "testdata"
 
 var aruziteURL = os.Getenv("TEST_AZURE_ENDPOINT")
 
-func Test_Store_String(t *testing.T) {
-	require.Equal(t, "azblob", (&SnapshotStore{}).String())
-}
-
-func Test_Store(t *testing.T) {
+func TestAzureStore(t *testing.T) {
 	ch := make(chan struct{})
-	store, skip := testStore(t, WithPollOptions(
+	store, skip := testAzureStore(t, WithPollOptions(
 		fs.WithInterval(time.Second),
 		fs.WithNotify(t, func(modified bool) {
 			if modified {
@@ -37,7 +33,9 @@ func Test_Store(t *testing.T) {
 		return
 	}
 
-	client := testClient(t)
+	require.Equal(t, "azblob", store.String())
+
+	client := testAzureClient(t)
 
 	// flag shouldn't be present until we update it
 	require.Error(t, store.View(func(s storage.ReadOnlyStore) error {
@@ -51,7 +49,7 @@ flags:
       name: Foo`)
 
 	// update features.yml
-	_, err := client.UploadBuffer(context.TODO(), store.container, "features.yml", updated, nil)
+	_, err := client.UploadBuffer(context.TODO(), store.bucket, "features.yml", updated, nil)
 	require.NoError(t, err)
 
 	// assert matching state
@@ -76,7 +74,7 @@ flags:
 
 }
 
-func testClient(t *testing.T) *azblob.Client {
+func testAzureClient(t *testing.T) *azblob.Client {
 	t.Helper()
 	account := os.Getenv("AZURE_STORAGE_ACCOUNT")
 	sharedKey := os.Getenv("AZURE_STORAGE_KEY")
@@ -87,7 +85,7 @@ func testClient(t *testing.T) *azblob.Client {
 	return client
 }
 
-func testStore(t *testing.T, opts ...containers.Option[SnapshotStore]) (*SnapshotStore, bool) {
+func testAzureStore(t *testing.T, opts ...containers.Option[SnapshotStore]) (*SnapshotStore, bool) {
 	t.Helper()
 	if aruziteURL == "" {
 		t.Skip("Set non-empty TEST_AZURE_ENDPOINT env var to run this test.")
@@ -95,7 +93,7 @@ func testStore(t *testing.T, opts ...containers.Option[SnapshotStore]) (*Snapsho
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
-	client := testClient(t)
+	client := testAzureClient(t)
 	// create container
 	_, err := client.CreateContainer(ctx, testContainer, nil)
 	if err != nil {
@@ -106,9 +104,12 @@ func testStore(t *testing.T, opts ...containers.Option[SnapshotStore]) (*Snapsho
 	_, err = client.UploadBuffer(ctx, testContainer, ".flipt.yml", []byte(`namespace: production`), nil)
 	require.NoError(t, err)
 
-	source, err := NewSnapshotStore(ctx, zaptest.NewLogger(t), testContainer,
+	strurl, err := AzureFSURL(testContainer, aruziteURL)
+	require.NoError(t, err)
+	source, err := NewSnapshotStore(ctx, zaptest.NewLogger(t),
 		append([]containers.Option[SnapshotStore]{
-			WithEndpoint(aruziteURL),
+			WithFS("azblob", strurl),
+			WithBucket(testContainer, ""),
 		},
 			opts...)...,
 	)

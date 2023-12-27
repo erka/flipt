@@ -1,4 +1,4 @@
-package gcs
+package object
 
 import (
 	"context"
@@ -14,17 +14,13 @@ import (
 	"go.uber.org/zap/zaptest"
 )
 
-const testBucket = "testdata"
+const testGSBucket = "testdata"
 
 var emulatorURL = os.Getenv("STORAGE_EMULATOR_HOST")
 
-func Test_Store_String(t *testing.T) {
-	require.Equal(t, "gcs", (&SnapshotStore{}).String())
-}
-
-func Test_Store(t *testing.T) {
+func TestGSStore(t *testing.T) {
 	ch := make(chan struct{})
-	store, skip := testStore(t, WithPollOptions(
+	store, skip := testGSStore(t, WithPollOptions(
 		fs.WithInterval(time.Second),
 		fs.WithNotify(t, func(modified bool) {
 			if modified {
@@ -35,7 +31,7 @@ func Test_Store(t *testing.T) {
 	if skip {
 		return
 	}
-
+	require.Equal(t, "gcs", store.String())
 	// flag shouldn't be present until we update it
 	require.Error(t, store.View(func(s storage.ReadOnlyStore) error {
 		_, err := s.GetFlag(context.TODO(), "production", "foo")
@@ -46,7 +42,7 @@ func Test_Store(t *testing.T) {
 flags:
     - key: foo
       name: Foo`)
-	gcsClient := testClient(t)
+	gcsClient := testGSClient(t)
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 	// update features.yml
@@ -82,7 +78,7 @@ flags:
 
 }
 
-func testStore(t *testing.T, opts ...containers.Option[SnapshotStore]) (*SnapshotStore, bool) {
+func testGSStore(t *testing.T, opts ...containers.Option[SnapshotStore]) (*SnapshotStore, bool) {
 	t.Helper()
 
 	if emulatorURL == "" {
@@ -93,8 +89,8 @@ func testStore(t *testing.T, opts ...containers.Option[SnapshotStore]) (*Snapsho
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 
-	gcsClient := testClient(t)
-	bucket := gcsClient.Bucket(testBucket)
+	gcsClient := testGSClient(t)
+	bucket := gcsClient.Bucket(testGSBucket)
 	err := bucket.Create(ctx, "", nil)
 	require.NoError(t, err)
 
@@ -118,12 +114,18 @@ func testStore(t *testing.T, opts ...containers.Option[SnapshotStore]) (*Snapsho
 	require.NoError(t, err)
 	err = w.Close()
 	require.NoError(t, err)
-	source, err := NewSnapshotStore(ctx, zaptest.NewLogger(t), testBucket, opts...)
+	source, err := NewSnapshotStore(ctx, zaptest.NewLogger(t),
+		append([]containers.Option[SnapshotStore]{
+			WithFS("gcs", GSFSURL(testGSBucket)),
+			WithBucket(testGSBucket, ""),
+		},
+			opts...)...,
+	)
 	require.NoError(t, err)
 	return source, false
 }
 
-func testClient(t *testing.T) *gstorage.Client {
+func testGSClient(t *testing.T) *gstorage.Client {
 	t.Helper()
 	client, err := gstorage.NewClient(context.Background())
 	require.NoError(t, err)

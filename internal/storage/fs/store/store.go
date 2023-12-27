@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
 	gitssh "github.com/go-git/go-git/v5/plumbing/transport/ssh"
@@ -14,9 +15,7 @@ import (
 	storagefs "go.flipt.io/flipt/internal/storage/fs"
 	"go.flipt.io/flipt/internal/storage/fs/git"
 	"go.flipt.io/flipt/internal/storage/fs/local"
-	"go.flipt.io/flipt/internal/storage/fs/object/azblob"
-	"go.flipt.io/flipt/internal/storage/fs/object/gcs"
-	"go.flipt.io/flipt/internal/storage/fs/object/s3"
+	"go.flipt.io/flipt/internal/storage/fs/object"
 	storageoci "go.flipt.io/flipt/internal/storage/fs/oci"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/ssh"
@@ -137,59 +136,47 @@ func NewStore(ctx context.Context, logger *zap.Logger, cfg *config.Config) (_ st
 // newObjectStore create a new storate.Store from the object config
 func newObjectStore(ctx context.Context, cfg *config.Config, logger *zap.Logger) (store storage.Store, err error) {
 	objectCfg := cfg.Storage.Object
+
+	var (
+		bucket, prefix, strurl string
+		internal               time.Duration
+	)
 	// keep this as a case statement in anticipation of
 	// more object types in the future
 	// nolint:gocritic
 	switch objectCfg.Type {
 	case config.S3ObjectSubStorageType:
-		opts := []containers.Option[s3.SnapshotStore]{
-			s3.WithPollOptions(
-				storagefs.WithInterval(objectCfg.S3.PollInterval),
-			),
-		}
-		if objectCfg.S3.Endpoint != "" {
-			opts = append(opts, s3.WithEndpoint(objectCfg.S3.Endpoint))
-		}
-		if objectCfg.S3.Region != "" {
-			opts = append(opts, s3.WithRegion(objectCfg.S3.Region))
-		}
+		strurl = object.S3FSURL(objectCfg.S3.Bucket, objectCfg.S3.Region, objectCfg.S3.Endpoint)
+		bucket = objectCfg.S3.Bucket
+		prefix = objectCfg.S3.Prefix
+		internal = objectCfg.S3.PollInterval
 
-		snapStore, err := s3.NewSnapshotStore(ctx, logger, objectCfg.S3.Bucket, opts...)
-		if err != nil {
-			return nil, err
-		}
-
-		return storagefs.NewStore(snapStore), nil
 	case config.AZBlobObjectSubStorageType:
-		opts := []containers.Option[azblob.SnapshotStore]{
-			azblob.WithEndpoint(objectCfg.AZBlob.Endpoint),
-			azblob.WithPollOptions(
-				storagefs.WithInterval(objectCfg.AZBlob.PollInterval),
-			),
-		}
-
-		snapStore, err := azblob.NewSnapshotStore(ctx, logger, objectCfg.AZBlob.Container, opts...)
+		strurl, err = object.AzureFSURL(objectCfg.AZBlob.Container, objectCfg.AZBlob.Endpoint)
 		if err != nil {
 			return nil, err
 		}
-
-		return storagefs.NewStore(snapStore), nil
-
+		bucket = objectCfg.AZBlob.Container
+		prefix = ""
+		internal = objectCfg.AZBlob.PollInterval
 	case config.GSBlobObjectSubStorageType:
-		opts := []containers.Option[gcs.SnapshotStore]{
-			gcs.WithPrefix(objectCfg.GS.Prefix),
-			gcs.WithPollOptions(
-				storagefs.WithInterval(objectCfg.GS.PollInterval),
-			),
-		}
-
-		snapStore, err := gcs.NewSnapshotStore(ctx, logger, objectCfg.GS.Bucket, opts...)
-		if err != nil {
-			return nil, err
-		}
-
-		return storagefs.NewStore(snapStore), nil
+		strurl = object.GSFSURL(objectCfg.GS.Bucket)
+		bucket = objectCfg.GS.Bucket
+		prefix = objectCfg.GS.Prefix
+		internal = objectCfg.GS.PollInterval
+	default:
+		return nil, fmt.Errorf("unexpected object storage subtype: %q", objectCfg.Type)
 	}
-
-	return nil, fmt.Errorf("unexpected object storage subtype: %q", objectCfg.Type)
+	opts := []containers.Option[object.SnapshotStore]{
+		object.WithFS(objectCfg.Type, strurl),
+		object.WithBucket(bucket, prefix),
+		object.WithPollOptions(
+			storagefs.WithInterval(internal),
+		),
+	}
+	snapStore, err := object.NewSnapshotStore(ctx, logger, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return storagefs.NewStore(snapStore), nil
 }
