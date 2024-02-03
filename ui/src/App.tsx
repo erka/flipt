@@ -3,7 +3,7 @@ import nightwind from 'nightwind/helper';
 import { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { useSelector } from 'react-redux';
-import { createHashRouter, RouterProvider } from 'react-router-dom';
+import { createHashRouter, redirect, RouterProvider } from 'react-router-dom';
 import ErrorLayout from './app/ErrorLayout';
 import Flag from './app/flags/Flag';
 import NewFlag from './app/flags/NewFlag';
@@ -12,8 +12,8 @@ import NotFoundLayout from './app/NotFoundLayout';
 import { selectTheme } from './app/preferences/preferencesSlice';
 import NewSegment from './app/segments/NewSegment';
 import Segment from './app/segments/Segment';
-import SessionProvider from './components/SessionProvider';
 import { Theme } from './types/Preferences';
+import { useSession } from './data/hooks/session';
 const Flags = loadable(() => import('./app/flags/Flags'));
 const Variants = loadable(() => import('./app/flags/variants/Variants'));
 const Rules = loadable(() => import('./app/flags/rules/Rules'));
@@ -84,61 +84,75 @@ const namespacesRoutes = [
   }
 ];
 
-const router = createHashRouter([
-  {
-    path: '/login',
-    element: <Login />,
-    errorElement: <ErrorLayout />
-  },
-  {
-    path: '/',
-    element: <Layout />,
-    errorElement: <ErrorLayout />,
-    children: [
-      {
-        path: 'namespaces/:namespaceKey',
-        children: namespacesRoutes
-      },
-      {
-        path: 'settings',
-        element: <Settings />,
-        children: [
-          {
-            element: <Preferences />,
-            index: true
-          },
-          {
-            path: 'namespaces',
-            element: <Namespaces />
-          },
-          {
-            path: 'tokens',
-            element: <Tokens />
-          }
-        ]
-      },
-      {
-        path: 'onboarding',
-        element: <Onboarding />
-      },
-      {
-        path: 'support',
-        element: <Support />
-      },
-      ...namespacesRoutes
-    ]
-  },
-  {
-    path: '*',
-    element: <NotFoundLayout />
-  }
-]);
-
 export default function App() {
   const theme = useSelector(selectTheme);
   const [systemPrefersDark, setSystemPrefersDark] = useState(
     window.matchMedia('(prefers-color-scheme: dark)').matches
   );
+
+  const { session } = useSession();
+
+  const router = createHashRouter([
+    {
+      path: '/login',
+      element: <Login />,
+      errorElement: <ErrorLayout />,
+      loader: () => {
+        if (session?.authenticated) {
+          return redirect('/');
+        }
+        return null;
+      }
+    },
+    {
+      path: '/',
+      element: <Layout />,
+      errorElement: <ErrorLayout />,
+      loader: () => {
+        if (!session?.authenticated) {
+          return redirect('/login');
+        }
+        return null;
+      },
+      children: [
+        {
+          path: 'namespaces/:namespaceKey',
+          children: namespacesRoutes
+        },
+        {
+          path: 'settings',
+          element: <Settings />,
+          children: [
+            {
+              element: <Preferences />,
+              index: true
+            },
+            {
+              path: 'namespaces',
+              element: <Namespaces />
+            },
+            {
+              path: 'tokens',
+              element: <Tokens />
+            }
+          ]
+        },
+        {
+          path: 'onboarding',
+          element: <Onboarding />
+        },
+        {
+          path: 'support',
+          element: <Support />
+        },
+        ...namespacesRoutes
+      ]
+    },
+    {
+      path: '*',
+      element: <NotFoundLayout />
+    }
+  ]);
 
   useEffect(() => {
     window
@@ -163,9 +177,7 @@ export default function App() {
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <script dangerouslySetInnerHTML={{ __html: nightwind.init() }} />
       </Helmet>
-      <SessionProvider>
-        <RouterProvider router={router} />
-      </SessionProvider>
+      <RouterProvider router={router} />
     </>
   );
 }

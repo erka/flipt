@@ -7,7 +7,6 @@ import {
 } from '@fortawesome/free-brands-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useMemo } from 'react';
-import { Navigate } from 'react-router-dom';
 import { useListAuthProvidersQuery } from '~/app/auth/authApi';
 import logoFlag from '~/assets/logo-flag.png';
 import Loading from '~/components/Loading';
@@ -50,26 +49,8 @@ const knownProviders: Record<string, ILoginProvider> = {
 };
 
 function InnerLoginButtons() {
-  const { setError, clearError } = useError();
-
-  const authorize = async (uri: string) => {
-    const res = await fetch(uri, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-
-    if (!res.ok || res.status !== 200) {
-      const { message } = await res.json();
-      setError('Unable to authenticate: ' + message);
-      return;
-    }
-
-    clearError();
-    const body = await res.json();
-    window.location.href = body.authorizeUrl;
-  };
+  const { setError } = useError();
+  const { login } = useSession();
   const {
     data: listAuthProviders,
     isLoading,
@@ -128,7 +109,7 @@ function InnerLoginButtons() {
                 className="bg-white text-gray-500 border-gray-300 inline-flex w-full justify-center rounded-md border px-4 py-2 text-sm font-medium shadow-sm hover:text-violet-500 hover:shadow-violet-300"
                 onClick={(e) => {
                   e.preventDefault();
-                  authorize(provider.authorize_url);
+                  login(provider.authorize_url);
                 }}
               >
                 <span className="sr-only">Sign in with {provider.name}</span>
@@ -174,12 +155,6 @@ function InnerLoginButtons() {
 }
 
 function InnerLogin() {
-  const { session } = useSession();
-
-  if (session && (!session.required || session.authenticated)) {
-    return <Navigate to="/" />;
-  }
-
   return (
     <>
       <div className="bg-white flex min-h-screen flex-col justify-center sm:px-6 lg:px-8">

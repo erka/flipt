@@ -29,7 +29,6 @@ import {
 } from './namespaces/namespacesSlice';
 
 function InnerLayout() {
-  const { session } = useSession();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const dispatch = useAppDispatch();
@@ -60,10 +59,6 @@ function InnerLayout() {
     dispatch(fetchInfoAsync());
     dispatch(fetchConfigAsync());
   }, [dispatch]);
-
-  if (!session) {
-    return <Navigate to="/login" />;
-  }
 
   if (namespaces.isLoading || config.status != LoadingStatus.SUCCEEDED) {
     return <Loading fullScreen />;

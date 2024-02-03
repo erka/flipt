@@ -1,78 +1,91 @@
-import { createContext, useEffect, useMemo } from 'react';
+import { createContext, useEffect, useMemo, useState } from 'react';
 import { getAuthSelf, getInfo } from '~/data/api';
-import { useLocalStorage } from '~/data/hooks/storage';
 import { IAuthGithubInternal } from '~/types/auth/Github';
 import { IAuthOIDCInternal } from '~/types/auth/OIDC';
+import { expireAuthSelf } from '~/data/api';
+import { useError } from '~/data/hooks/error';
+import { redirect } from 'react-router-dom';
 
 type Session = {
-  required: boolean;
   authenticated: boolean;
   self?: IAuthOIDCInternal | IAuthGithubInternal;
 };
 
 interface SessionContextType {
   session?: Session;
-  setSession: (data: any) => void;
-  clearSession: () => void;
+  login: (uri: string) => void;
+  logout: () => void;
 }
 
 export const SessionContext = createContext({} as SessionContextType);
+
+const blank = {
+  authenticated: false
+};
 
 export default function SessionProvider({
   children
 }: {
   children: React.ReactNode;
 }) {
-  const [session, setSession, clearSession] = useLocalStorage('session', null);
-
+  const [session, setSession] = useState<Session>(blank);
+  const { setError, clearError } = useError();
   useEffect(() => {
     const loadSession = async () => {
       let session = {
-        required: true,
         authenticated: false
       } as Session;
 
       try {
         await getInfo();
+        session.authenticated = true;
+        session.self = await getAuthSelf();
       } catch (err) {
-        // if we can't get the info, we're not logged in
-        // or there was an error, either way, clear the session so we redirect
-        // to the login page
-        clearSession();
-        return;
+        // TODO: check the response if it's 401
       }
-
-      try {
-        const self: IAuthOIDCInternal | IAuthOIDCInternal = await getAuthSelf();
-        session = {
-          authenticated: true,
-          required: true,
-          self: self
-        };
-      } catch (err) {
-        // if we can't get the self info and we got here then auth is likely not enabled
-        // so we can just return
-        session = {
-          authenticated: false,
-          required: false
-        };
-      } finally {
-        if (session) {
-          setSession(session);
-        }
-      }
+      setSession(session);
     };
-    if (!session) loadSession();
+    loadSession();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const logout = async () => {
+    expireAuthSelf()
+      .then(() => {
+        setSession(blank);
+        redirect('/login');
+      })
+      .catch((err) => {
+        setError(err);
+      });
+  };
+
+  const login = async (uri: string) => {
+    const res = await fetch(uri, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!res.ok || res.status !== 200) {
+      const { message } = await res.json();
+      setError('Unable to authenticate: ' + message);
+      return;
+    }
+
+    clearError();
+    const body = await res.json();
+    window.location.href = body.authorizeUrl;
+  };
 
   const value = useMemo(
     () => ({
       session,
-      setSession,
-      clearSession
+      login,
+      logout
     }),
-    [session, setSession, clearSession]
+    [session, setSession, logout]
   );
 
   return (

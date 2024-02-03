@@ -1,7 +1,6 @@
 import { Menu, Transition } from '@headlessui/react';
 import { UserCircleIcon } from '@heroicons/react/24/solid';
 import { Fragment } from 'react';
-import { expireAuthSelf } from '~/data/api';
 import { useError } from '~/data/hooks/error';
 import { useSession } from '~/data/hooks/session';
 import { IAuthMethodGithubMetadata } from '~/types/auth/Github';
@@ -15,8 +14,7 @@ type UserProfileProps = {
 export default function UserProfile(props: UserProfileProps) {
   const { metadata } = props;
 
-  const { setError } = useError();
-  const { clearSession } = useSession();
+  const { logout } = useSession();
 
   let name: string | undefined;
   let login: string | undefined;
@@ -42,17 +40,6 @@ export default function UserProfile(props: UserProfileProps) {
       }
     }
   }
-
-  const logout = async () => {
-    expireAuthSelf()
-      .then(() => {
-        clearSession();
-        window.location.href = '/';
-      })
-      .catch((err) => {
-        setError(err);
-      });
-  };
 
   return (
     <Menu as="div" className="relative ml-3">

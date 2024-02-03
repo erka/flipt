@@ -4,11 +4,13 @@ import { Provider } from 'react-redux';
 import App from './App';
 import './index.css';
 import { store } from './store';
-
+import SessionProvider from '~/components/SessionProvider';
 config.autoAddCss = false;
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <Provider store={store}>
-    <App />
+    <SessionProvider>
+      <App />
+    </SessionProvider>
   </Provider>
 );
