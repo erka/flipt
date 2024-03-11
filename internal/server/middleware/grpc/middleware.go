@@ -9,6 +9,9 @@ import (
 
 	"github.com/blang/semver/v4"
 	"github.com/gofrs/uuid"
+	"github.com/open-policy-agent/opa/rego"
+	"github.com/open-policy-agent/opa/storage/inmem"
+	"github.com/open-policy-agent/opa/util"
 	errs "go.flipt.io/flipt/errors"
 	"go.flipt.io/flipt/internal/cache"
 	"go.flipt.io/flipt/internal/server/analytics"
@@ -27,6 +30,88 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 )
+
+type NK interface {
+	GetNamespaceKey() string
+}
+
+const module = `
+package flipt.authz
+
+import rego.v1
+
+default allow := false
+
+allow if {
+	glob.match("/flipt.meta.MetadataService/*", null, input.method)
+}
+
+allow if {
+	glob.match("*List*", null, input.method)
+}
+
+allow if {
+	glob.match("*", null, input.method)
+	data.allowed_namespaces[input.user][_] == input.namespace
+}
+`
+
+const data = `
+	{"allowed_namespaces": {
+		"flipter": ["default", "new"]
+	}}
+`
+
+func RBACInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+
+	var json map[string]interface{}
+
+	err = util.UnmarshalJSON([]byte(data), &json)
+	if err != nil {
+		// Handle error.
+		return
+	}
+	store := inmem.NewFromObject(json)
+	engine := rego.New(
+		rego.Query("x := data.flipt.authz.allow"),
+		rego.Module("flipt-policy.rego", module),
+		rego.Store(store),
+	)
+	query, err := engine.PrepareForEval(ctx)
+	if err != nil {
+		return
+	}
+	namespaceKey := ""
+	if v, ok := req.(NK); ok {
+		namespaceKey = v.GetNamespaceKey()
+	}
+
+	input := map[string]interface{}{
+		"method":    info.FullMethod,
+		"namespace": namespaceKey,
+		"user":      "flipter",
+	}
+
+	results, err := query.Eval(ctx, rego.EvalInput(input))
+	if err != nil {
+		return
+	}
+	if !Allowed(results) {
+		return nil, errors.ErrUnsupported
+	}
+	return handler(ctx, req)
+}
+
+func Allowed(rs rego.ResultSet) bool {
+	if len(rs) == 1 {
+		if exprs := rs[0].Bindings; len(exprs) == 1 {
+			if b, ok := exprs["x"].(bool); ok {
+				return b
+			}
+		}
+	}
+	return false
+}
 
 // ValidationUnaryInterceptor validates incoming requests
 func ValidationUnaryInterceptor(ctx context.Context, req interface{}, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {

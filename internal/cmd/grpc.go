@@ -305,6 +305,8 @@ func NewGRPCServer(
 		)...,
 	)
 
+	interceptors = append(interceptors, middlewaregrpc.RBACInterceptor)
+
 	// cache must come after auth interceptors
 	if cfg.Cache.Enabled && cacher != nil {
 		interceptors = append(interceptors, middlewaregrpc.CacheUnaryInterceptor(cacher, logger))
