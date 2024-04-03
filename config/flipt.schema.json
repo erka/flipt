@@ -758,7 +758,7 @@
               "properties": {
                 "type":  {
                   "type": "string",
-                  "enum": ["static", "aws/ecr"],
+                  "enum": ["static", "aws-ecr"],
                   "default": "static"
                 },
                 "username": { "type": "string" },

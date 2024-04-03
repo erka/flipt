@@ -3,6 +3,7 @@ package oci
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -11,6 +12,8 @@ import (
 	"oras.land/oras-go/v2"
 	"oras.land/oras-go/v2/registry/remote/auth"
 )
+
+var ErrNoAWSECRAuthorizationData = errors.New("no ecr authorization data provided")
 
 // StoreOptions are used to configure call to NewStore
 // This shouldn't be handled directory, instead use one of the function options
@@ -25,7 +28,7 @@ type StoreOptions struct {
 // with remote registries
 func WithCredentials(kind, user, pass string) containers.Option[StoreOptions] {
 	switch kind {
-	case "aws/ecr":
+	case "aws-ecr":
 		return WithAWSECRCredentials()
 	default:
 		return WithStaticCredentials(user, pass)
@@ -68,23 +71,33 @@ func awsECRCredential(ctx context.Context, hostport string) (auth.Credential, er
 	if err != nil {
 		return auth.EmptyCredential, err
 	}
-	var client *ecr.Client = ecr.NewFromConfig(cfg)
+	client := ecr.NewFromConfig(cfg)
 	response, err := client.GetAuthorizationToken(ctx, &ecr.GetAuthorizationTokenInput{})
 	if err != nil {
 		return auth.EmptyCredential, err
 	}
-	token := response.AuthorizationData[0].AuthorizationToken
-	output, err := base64.StdEncoding.DecodeString(*token)
+	if len(response.AuthorizationData) == 0 {
+		return auth.EmptyCredential, ErrNoAWSECRAuthorizationData
+	}
+	return credentialsFromECRAuthorizationToken(response.AuthorizationData[0].AuthorizationToken)
+}
 
+// credentialsFromECRAuthorizationToken converts the raw AWS ECR token to oras credential
+func credentialsFromECRAuthorizationToken(token *string) (auth.Credential, error) {
+	if token == nil {
+		return auth.EmptyCredential, auth.ErrBasicCredentialNotFound
+	}
+
+	output, err := base64.StdEncoding.DecodeString(*token)
 	if err != nil {
 		return auth.EmptyCredential, err
 	}
 
 	userpass := strings.SplitN(string(output), ":", 2)
-
 	if len(userpass) != 2 {
 		return auth.EmptyCredential, auth.ErrBasicCredentialNotFound
 	}
+
 	return auth.Credential{
 		Username: userpass[0],
 		Password: userpass[1],
