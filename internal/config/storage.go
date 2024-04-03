@@ -321,6 +321,7 @@ type OCI struct {
 
 // OCIAuthentication configures the credentials for authenticating against a target OCI regitstry
 type OCIAuthentication struct {
+	Type     string `json:"-" mapstructure:"type" yaml:"-"`
 	Username string `json:"-" mapstructure:"username" yaml:"-"`
 	Password string `json:"-" mapstructure:"password" yaml:"-"`
 }

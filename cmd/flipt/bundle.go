@@ -163,6 +163,7 @@ func (c *bundleCommand) getStore() (*oci.Store, error) {
 	if cfg := cfg.Storage.OCI; cfg != nil {
 		if cfg.Authentication != nil {
 			opts = append(opts, oci.WithCredentials(
+				cfg.Authentication.Type,
 				cfg.Authentication.Username,
 				cfg.Authentication.Password,
 			))

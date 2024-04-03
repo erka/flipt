@@ -110,6 +110,7 @@ func NewStore(ctx context.Context, logger *zap.Logger, cfg *config.Config) (_ st
 		var opts []containers.Option[oci.StoreOptions]
 		if auth := cfg.Storage.OCI.Authentication; auth != nil {
 			opts = append(opts, oci.WithCredentials(
+				auth.Type,
 				auth.Username,
 				auth.Password,
 			))
