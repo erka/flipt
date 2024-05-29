@@ -13,6 +13,7 @@ import logoFlag from '~/assets/logo-flag.png';
 import Loading from '~/components/Loading';
 import { NotificationProvider } from '~/components/NotificationProvider';
 import ErrorNotification from '~/components/notifications/ErrorNotification';
+import { authURL } from '~/data/api';
 import { useError } from '~/data/hooks/error';
 import { useSession } from '~/data/hooks/session';
 import { IAuthMethod } from '~/types/Auth';
@@ -26,7 +27,6 @@ interface ILoginProvider {
 interface IAuthDisplay {
   name: string;
   authorize_url: string;
-  callback_url: string;
   icon: IconDefinition;
 }
 
@@ -93,23 +93,17 @@ function InnerLoginButtons() {
         if (m.method === 'METHOD_GITHUB') {
           return {
             name: 'Github',
-            authorize_url: m.metadata.authorize_url,
-            callback_url: m.metadata.callback_url,
+            authorize_url: `${authURL}/method/github/authorize`,
             icon: faGithub
           };
         }
         if (m.method === 'METHOD_OIDC') {
-          return Object.entries(m.metadata.providers).map(([k, value]) => {
-            k = k.toLowerCase();
-            const v = value as {
-              authorize_url: string;
-              callback_url: string;
-            };
+          return Object.keys(m.metadata.providers).map((k) => {
+            const kl = k.toLowerCase();
             return {
-              name: knownProviders[k]?.displayName || upperFirst(k), // if we dont know the provider, just capitalize the first letter
-              authorize_url: v.authorize_url,
-              callback_url: v.callback_url,
-              icon: knownProviders[k]?.icon || faOpenid // if we dont know the provider icon, use the openid icon
+              name: knownProviders[kl]?.displayName || upperFirst(kl), // if we dont know the provider, just capitalize the first letter
+              authorize_url: `${authURL}/method/oidc/${k}/authorize`,
+              icon: knownProviders[kl]?.icon || faOpenid // if we dont know the provider icon, use the openid icon
             };
           });
         }

@@ -1,9 +1,6 @@
 import { IAuth, IAuthMethod } from '~/types/Auth';
 
-interface AuthMethodOIDCMetadataProvider {
-  authorize_url: string;
-  callback_url: string;
-}
+interface AuthMethodOIDCMetadataProvider {}
 
 export interface IAuthMethodOIDC extends IAuthMethod {
   method: 'METHOD_OIDC';
