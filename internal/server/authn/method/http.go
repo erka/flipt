@@ -117,7 +117,7 @@ func (m Middleware) Handler(next http.Handler) http.Handler {
 		}
 
 		if method == "authorize" {
-			prefix = path.Join(r.Header.Get(xForwardedPrefix), prefix)
+			prefix = path.Join(path.Join(r.Header.Values(xForwardedPrefix)...), prefix)
 			query := r.URL.Query()
 			// create a random security token and bind it to
 			// the state parameter while preserving any provided
