@@ -313,7 +313,7 @@ func run(ctx context.Context, logger *zap.Logger, cfg *config.Config) error {
 	}
 
 	if isSet(ciVar) && cfg.Meta.TelemetryEnabled {
-		logger.Debug("CI detected, disabling telemetry")
+		logger.Warn("CI detected, disabling telemetry")
 		cfg.Meta.TelemetryEnabled = false
 	}
 
