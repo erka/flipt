@@ -189,6 +189,8 @@ func WalkDocuments(logger *zap.Logger, src fs.FS, fn func(*ext.Document) error) 
 		return err
 	}
 
+	var so SnapshotOption
+	containers.ApplyAll(&so, WithFileInfoEtag())
 	for _, file := range paths {
 		logger.Debug("opening state file", zap.String("path", file))
 
@@ -198,8 +200,6 @@ func WalkDocuments(logger *zap.Logger, src fs.FS, fn func(*ext.Document) error) 
 		}
 		defer fi.Close()
 
-		var so SnapshotOption
-		containers.ApplyAll(&so, WithFileInfoEtag())
 		docs, err := documentsFromFile(fi, so)
 		if err != nil {
 			return err
