@@ -5,8 +5,6 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/google/uuid"
-
 	"go.flipt.io/flipt/internal/server/ofrep"
 
 	rpcevaluation "go.flipt.io/flipt/rpc/flipt/evaluation"
@@ -17,14 +15,11 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-const ofrepCtxTargetingKey = "targetingKey"
-
-func (s *Server) OFREPEvaluationBridge(ctx context.Context, input ofrep.EvaluationBridgeInput) (ofrep.EvaluationBridgeOutput, error) {
+func (s *Server) OFREPFlagEvaluation(ctx context.Context, input ofrep.EvaluationBridgeInput) (ofrep.EvaluationBridgeOutput, error) {
 	flag, err := s.store.GetFlag(ctx, storage.NewResource(input.NamespaceKey, input.FlagKey))
 	if err != nil {
 		return ofrep.EvaluationBridgeOutput{}, err
 	}
-
 	span := trace.SpanFromContext(ctx)
 	span.SetAttributes(
 		fliptotel.AttributeNamespace.String(input.NamespaceKey),
@@ -35,13 +30,8 @@ func (s *Server) OFREPEvaluationBridge(ctx context.Context, input ofrep.Evaluati
 	req := &rpcevaluation.EvaluationRequest{
 		NamespaceKey: input.NamespaceKey,
 		FlagKey:      input.FlagKey,
-		EntityId:     uuid.NewString(),
+		EntityId:     input.EntityId,
 		Context:      input.Context,
-	}
-
-	// https://openfeature.dev/docs/reference/concepts/evaluation-context/#targeting-key
-	if targetingKey, ok := input.Context[ofrepCtxTargetingKey]; ok {
-		req.EntityId = targetingKey
 	}
 
 	switch flag.Type {
@@ -87,4 +77,8 @@ func (s *Server) OFREPEvaluationBridge(ctx context.Context, input ofrep.Evaluati
 	default:
 		return ofrep.EvaluationBridgeOutput{}, errors.New("unsupported flag type for ofrep bridge")
 	}
+}
+
+func (s *Server) OFREPBulkEvaluation(ctx context.Context, input ofrep.EvaluationBridgeInput) ([]ofrep.EvaluationBridgeOutput, error) {
+	return nil, errors.ErrUnsupported
 }

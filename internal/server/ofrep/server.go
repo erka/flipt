@@ -15,6 +15,7 @@ import (
 type EvaluationBridgeInput struct {
 	FlagKey      string
 	NamespaceKey string
+	EntityId     string
 	Context      map[string]string
 }
 
@@ -28,8 +29,10 @@ type EvaluationBridgeOutput struct {
 
 // Bridge is the interface between the OFREP specification to Flipt internals.
 type Bridge interface {
-	// OFREPEvaluationBridge evaluates a single flag.
-	OFREPEvaluationBridge(ctx context.Context, input EvaluationBridgeInput) (EvaluationBridgeOutput, error)
+	// OFREPFlagEvaluation evaluates a single flag.
+	OFREPFlagEvaluation(ctx context.Context, input EvaluationBridgeInput) (EvaluationBridgeOutput, error)
+	// OFREPBulkEvaluation evaluates all or bulk flags.
+	OFREPBulkEvaluation(ctx context.Context, input EvaluationBridgeInput) ([]EvaluationBridgeOutput, error)
 }
 
 // Server servers the methods used by the OpenFeature Remote Evaluation Protocol.

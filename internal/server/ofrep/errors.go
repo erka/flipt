@@ -68,9 +68,9 @@ func NewFlagNotFoundError(key string) error {
 	return status.Error(codes.NotFound, string(msg))
 }
 
-func NewTargetingKeyMissing() error {
+func NewFlagMissing() error {
 	msg, err := json.Marshal(errorSchema{
-		ErrorCode:    string(errorCodeTargetingKeyMissing),
+		ErrorCode:    string(errorCodeFlagNotFound),
 		ErrorDetails: "flag key was not provided",
 	})
 	if err != nil {
