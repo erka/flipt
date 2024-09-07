@@ -90,7 +90,7 @@ func AuthorizationRequiredInterceptor(logger *zap.Logger, policyVerifier authz.V
 			return ctx, errUnauthorized
 		}
 
-		request := requester.Request()
+		request := requester.Request(ctx)
 
 		allowed, err := policyVerifier.IsAllowed(ctx, map[string]interface{}{
 			"request":        request,

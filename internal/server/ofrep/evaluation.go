@@ -10,7 +10,6 @@ import (
 
 	rpcevaluation "go.flipt.io/flipt/rpc/flipt/evaluation"
 	"go.flipt.io/flipt/rpc/flipt/ofrep"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
@@ -24,7 +23,7 @@ func (s *Server) EvaluateFlag(ctx context.Context, r *ofrep.EvaluateFlagRequest)
 	entityId := getTargetingKey(r.Context)
 	output, err := s.bridge.OFREPFlagEvaluation(ctx, EvaluationBridgeInput{
 		FlagKey:      r.Key,
-		NamespaceKey: getNamespace(ctx),
+		NamespaceKey: ofrep.GetNamespace(ctx),
 		EntityId:     entityId,
 		Context:      r.Context,
 	})
@@ -49,7 +48,7 @@ func (s *Server) EvaluateBulk(ctx context.Context, r *ofrep.EvaluateBulkRequest)
 	if !ok {
 		return nil, newFlagsMissingError()
 	}
-	namespaceKey := getNamespace(ctx)
+	namespaceKey := ofrep.GetNamespace(ctx)
 	keys := strings.Split(flagKeys, ",")
 	flags := make([]*ofrep.EvaluatedFlag, 0, len(keys))
 	for _, key := range keys {
@@ -102,20 +101,6 @@ func getTargetingKey(context map[string]string) string {
 		return targetingKey
 	}
 	return uuid.NewString()
-}
-
-func getNamespace(ctx context.Context) string {
-	md, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		return "default"
-	}
-
-	namespace := md.Get("x-flipt-namespace")
-	if len(namespace) == 0 {
-		return "default"
-	}
-
-	return namespace[0]
 }
 
 func transformReason(reason rpcevaluation.EvaluationReason) ofrep.EvaluateReason {

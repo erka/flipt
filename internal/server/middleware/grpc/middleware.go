@@ -246,7 +246,7 @@ func AuditEventUnaryInterceptor(logger *zap.Logger, eventPairChecker audit.Event
 			return handler(ctx, req)
 		}
 
-		request = r.Request()
+		request = r.Request(ctx)
 
 		var event *audit.Event
 

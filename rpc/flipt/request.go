@@ -1,7 +1,9 @@
 package flipt
 
+import "context"
+
 type Requester interface {
-	Request() Request
+	Request(ctx context.Context) Request
 }
 
 // Resource represents what resource or parent resource is being acted on.
@@ -21,6 +23,7 @@ const (
 	ResourceFlag           Resource = "flag"
 	ResourceSegment        Resource = "segment"
 	ResourceAuthentication Resource = "authentication"
+	ResourceOFREP          Resource = "ofrep"
 
 	SubjectConstraint   Subject = "constraint"
 	SubjectDistribution Subject = "distribution"
@@ -32,10 +35,11 @@ const (
 	SubjectToken        Subject = "token"
 	SubjectVariant      Subject = "variant"
 
-	ActionCreate Action = "create"
-	ActionDelete Action = "delete"
-	ActionUpdate Action = "update"
-	ActionRead   Action = "read"
+	ActionCreate   Action = "create"
+	ActionDelete   Action = "delete"
+	ActionUpdate   Action = "update"
+	ActionRead     Action = "read"
+	ActionEvaluate Action = "evaluate"
 
 	StatusSuccess Status = "success"
 	StatusDenied  Status = "denied"
@@ -93,153 +97,153 @@ func newSegmentScopedRequest(ns string, s Subject, a Action) Request {
 }
 
 // Namespaces
-func (req *GetNamespaceRequest) Request() Request {
+func (req *GetNamespaceRequest) Request(context.Context) Request {
 	return NewRequest(ResourceNamespace, ActionRead, WithNamespace(req.Key))
 }
 
-func (req *ListNamespaceRequest) Request() Request {
+func (req *ListNamespaceRequest) Request(context.Context) Request {
 	return NewRequest(ResourceNamespace, ActionRead)
 }
 
-func (req *CreateNamespaceRequest) Request() Request {
+func (req *CreateNamespaceRequest) Request(context.Context) Request {
 	return NewRequest(ResourceNamespace, ActionCreate, WithNamespace(req.Key))
 }
 
-func (req *UpdateNamespaceRequest) Request() Request {
+func (req *UpdateNamespaceRequest) Request(context.Context) Request {
 	return NewRequest(ResourceNamespace, ActionUpdate, WithNamespace(req.Key))
 }
 
-func (req *DeleteNamespaceRequest) Request() Request {
+func (req *DeleteNamespaceRequest) Request(context.Context) Request {
 	return NewRequest(ResourceNamespace, ActionDelete, WithNamespace(req.Key))
 }
 
 // Flags
-func (req *GetFlagRequest) Request() Request {
+func (req *GetFlagRequest) Request(context.Context) Request {
 	return newFlagScopedRequest(req.NamespaceKey, SubjectFlag, ActionRead)
 }
 
-func (req *ListFlagRequest) Request() Request {
+func (req *ListFlagRequest) Request(context.Context) Request {
 	return newFlagScopedRequest(req.NamespaceKey, SubjectFlag, ActionRead)
 }
 
-func (req *CreateFlagRequest) Request() Request {
+func (req *CreateFlagRequest) Request(context.Context) Request {
 	return newFlagScopedRequest(req.NamespaceKey, SubjectFlag, ActionCreate)
 }
 
-func (req *UpdateFlagRequest) Request() Request {
+func (req *UpdateFlagRequest) Request(context.Context) Request {
 	return newFlagScopedRequest(req.NamespaceKey, SubjectFlag, ActionUpdate)
 }
 
-func (req *DeleteFlagRequest) Request() Request {
+func (req *DeleteFlagRequest) Request(context.Context) Request {
 	return newFlagScopedRequest(req.NamespaceKey, SubjectFlag, ActionDelete)
 }
 
 // Variants
-func (req *CreateVariantRequest) Request() Request {
+func (req *CreateVariantRequest) Request(context.Context) Request {
 	return newFlagScopedRequest(req.NamespaceKey, SubjectVariant, ActionCreate)
 }
 
-func (req *UpdateVariantRequest) Request() Request {
+func (req *UpdateVariantRequest) Request(context.Context) Request {
 	return newFlagScopedRequest(req.NamespaceKey, SubjectVariant, ActionUpdate)
 }
 
-func (req *DeleteVariantRequest) Request() Request {
+func (req *DeleteVariantRequest) Request(context.Context) Request {
 	return newFlagScopedRequest(req.NamespaceKey, SubjectVariant, ActionDelete)
 }
 
 // Rules
-func (req *ListRuleRequest) Request() Request {
+func (req *ListRuleRequest) Request(context.Context) Request {
 	return newFlagScopedRequest(req.NamespaceKey, SubjectRule, ActionRead)
 }
 
-func (req *GetRuleRequest) Request() Request {
+func (req *GetRuleRequest) Request(context.Context) Request {
 	return newFlagScopedRequest(req.NamespaceKey, SubjectRule, ActionRead)
 }
 
-func (req *CreateRuleRequest) Request() Request {
+func (req *CreateRuleRequest) Request(context.Context) Request {
 	return newFlagScopedRequest(req.NamespaceKey, SubjectRule, ActionCreate)
 }
 
-func (req *UpdateRuleRequest) Request() Request {
+func (req *UpdateRuleRequest) Request(context.Context) Request {
 	return newFlagScopedRequest(req.NamespaceKey, SubjectRule, ActionUpdate)
 }
 
-func (req *OrderRulesRequest) Request() Request {
+func (req *OrderRulesRequest) Request(context.Context) Request {
 	return newFlagScopedRequest(req.NamespaceKey, SubjectRule, ActionUpdate)
 }
 
-func (req *DeleteRuleRequest) Request() Request {
+func (req *DeleteRuleRequest) Request(context.Context) Request {
 	return newFlagScopedRequest(req.NamespaceKey, SubjectRule, ActionDelete)
 }
 
 // Rollouts
-func (req *ListRolloutRequest) Request() Request {
+func (req *ListRolloutRequest) Request(context.Context) Request {
 	return newFlagScopedRequest(req.NamespaceKey, SubjectRollout, ActionRead)
 }
 
-func (req *GetRolloutRequest) Request() Request {
+func (req *GetRolloutRequest) Request(context.Context) Request {
 	return newFlagScopedRequest(req.NamespaceKey, SubjectRollout, ActionRead)
 }
 
-func (req *CreateRolloutRequest) Request() Request {
+func (req *CreateRolloutRequest) Request(context.Context) Request {
 	return newFlagScopedRequest(req.NamespaceKey, SubjectRollout, ActionCreate)
 }
 
-func (req *UpdateRolloutRequest) Request() Request {
+func (req *UpdateRolloutRequest) Request(context.Context) Request {
 	return newFlagScopedRequest(req.NamespaceKey, SubjectRollout, ActionUpdate)
 }
 
-func (req *OrderRolloutsRequest) Request() Request {
+func (req *OrderRolloutsRequest) Request(context.Context) Request {
 	return newFlagScopedRequest(req.NamespaceKey, SubjectRollout, ActionUpdate)
 }
 
-func (req *DeleteRolloutRequest) Request() Request {
+func (req *DeleteRolloutRequest) Request(context.Context) Request {
 	return newFlagScopedRequest(req.NamespaceKey, SubjectRollout, ActionDelete)
 }
 
 // Segments
-func (req *GetSegmentRequest) Request() Request {
+func (req *GetSegmentRequest) Request(context.Context) Request {
 	return newSegmentScopedRequest(req.NamespaceKey, SubjectSegment, ActionRead)
 }
 
-func (req *ListSegmentRequest) Request() Request {
+func (req *ListSegmentRequest) Request(context.Context) Request {
 	return newSegmentScopedRequest(req.NamespaceKey, SubjectSegment, ActionRead)
 }
 
-func (req *CreateSegmentRequest) Request() Request {
+func (req *CreateSegmentRequest) Request(context.Context) Request {
 	return newSegmentScopedRequest(req.NamespaceKey, SubjectSegment, ActionCreate)
 }
 
-func (req *UpdateSegmentRequest) Request() Request {
+func (req *UpdateSegmentRequest) Request(context.Context) Request {
 	return newSegmentScopedRequest(req.NamespaceKey, SubjectSegment, ActionUpdate)
 }
 
-func (req *DeleteSegmentRequest) Request() Request {
+func (req *DeleteSegmentRequest) Request(context.Context) Request {
 	return newSegmentScopedRequest(req.NamespaceKey, SubjectSegment, ActionDelete)
 }
 
 // Constraints
-func (req *CreateConstraintRequest) Request() Request {
+func (req *CreateConstraintRequest) Request(context.Context) Request {
 	return newSegmentScopedRequest(req.NamespaceKey, SubjectConstraint, ActionCreate)
 }
 
-func (req *UpdateConstraintRequest) Request() Request {
+func (req *UpdateConstraintRequest) Request(context.Context) Request {
 	return newSegmentScopedRequest(req.NamespaceKey, SubjectConstraint, ActionUpdate)
 }
 
-func (req *DeleteConstraintRequest) Request() Request {
+func (req *DeleteConstraintRequest) Request(context.Context) Request {
 	return newSegmentScopedRequest(req.NamespaceKey, SubjectConstraint, ActionDelete)
 }
 
 // Distributions
-func (req *CreateDistributionRequest) Request() Request {
+func (req *CreateDistributionRequest) Request(context.Context) Request {
 	return newSegmentScopedRequest(req.NamespaceKey, SubjectDistribution, ActionCreate)
 }
 
-func (req *UpdateDistributionRequest) Request() Request {
+func (req *UpdateDistributionRequest) Request(context.Context) Request {
 	return newSegmentScopedRequest(req.NamespaceKey, SubjectDistribution, ActionUpdate)
 }
 
-func (req *DeleteDistributionRequest) Request() Request {
+func (req *DeleteDistributionRequest) Request(context.Context) Request {
 	return newSegmentScopedRequest(req.NamespaceKey, SubjectDistribution, ActionDelete)
 }
