@@ -382,10 +382,10 @@ func Test_Server_SkipsAuthentication(t *testing.T) {
 
 func TestCallbackURL(t *testing.T) {
 	callback := callbackURL("https://flipt.io")
-	assert.Equal(t, callback, "https://flipt.io/auth/v1/method/github/callback")
+	assert.Equal(t, "https://flipt.io/auth/v1/method/github/callback", callback)
 
 	callback = callbackURL("https://flipt.io/")
-	assert.Equal(t, callback, "https://flipt.io/auth/v1/method/github/callback")
+	assert.Equal(t, "https://flipt.io/auth/v1/method/github/callback", callback)
 }
 
 func TestGithubSimpleOrganizationDecode(t *testing.T) {

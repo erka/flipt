@@ -79,7 +79,7 @@ func (s *DBTestSuite) TestListNamespaces() {
 	require.NoError(t, err)
 
 	got := res.Results
-	assert.NotZero(t, len(got))
+	assert.NotEmpty(t, got)
 
 	for _, ns := range got {
 		assert.NotZero(t, ns.CreatedAt)

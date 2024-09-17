@@ -274,7 +274,7 @@ func (s *DBTestSuite) TestListRules() {
 	require.NoError(t, err)
 
 	got := res.Results
-	assert.NotZero(t, len(got))
+	assert.NotEmpty(t, got)
 
 	for _, rule := range got {
 		assert.Equal(t, storage.DefaultNamespace, rule.NamespaceKey)
@@ -352,7 +352,7 @@ func (s *DBTestSuite) TestListRules_MultipleSegments() {
 	require.NoError(t, err)
 
 	got := res.Results
-	assert.NotZero(t, len(got))
+	assert.NotEmpty(t, got)
 
 	for _, rule := range got {
 		assert.Equal(t, storage.DefaultNamespace, rule.NamespaceKey)
@@ -423,7 +423,7 @@ func (s *DBTestSuite) TestListRulesNamespace() {
 	require.NoError(t, err)
 
 	got := res.Results
-	assert.NotZero(t, len(got))
+	assert.NotEmpty(t, got)
 
 	for _, rule := range got {
 		assert.Equal(t, s.namespace, rule.NamespaceKey)

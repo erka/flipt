@@ -53,7 +53,7 @@ func Test_Store(t *testing.T) {
 	}()
 
 	// change the filesystem contents
-	assert.NoError(t, os.WriteFile(ftc, []byte(`{"namespace":"staging"}`), os.ModePerm))
+	assert.NoError(t, os.WriteFile(ftc, []byte(`{"namespace":"staging"}`), 0600))
 
 	select {
 	case <-ch:

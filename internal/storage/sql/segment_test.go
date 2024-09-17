@@ -150,7 +150,7 @@ func (s *DBTestSuite) TestListSegments() {
 	res, err := s.store.ListSegments(context.TODO(), storage.ListWithOptions(storage.NewNamespace(storage.DefaultNamespace)))
 	require.NoError(t, err)
 	got := res.Results
-	assert.NotZero(t, len(got))
+	assert.NotEmpty(t, got)
 
 	for _, segment := range got {
 		assert.Equal(t, storage.DefaultNamespace, segment.NamespaceKey)
@@ -185,7 +185,7 @@ func (s *DBTestSuite) TestListSegmentsNamespace() {
 	res, err := s.store.ListSegments(context.TODO(), storage.ListWithOptions(storage.NewNamespace(s.namespace)))
 	require.NoError(t, err)
 	got := res.Results
-	assert.NotZero(t, len(got))
+	assert.NotEmpty(t, got)
 
 	for _, segment := range got {
 		assert.Equal(t, s.namespace, segment.NamespaceKey)

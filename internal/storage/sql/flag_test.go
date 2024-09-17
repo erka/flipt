@@ -130,7 +130,7 @@ func (s *DBTestSuite) TestListFlags() {
 	require.NoError(t, err)
 
 	got := res.Results
-	assert.NotZero(t, len(got))
+	assert.NotEmpty(t, got)
 
 	for _, flag := range got {
 		assert.Equal(t, storage.DefaultNamespace, flag.NamespaceKey)
@@ -167,7 +167,7 @@ func (s *DBTestSuite) TestListFlagsNamespace() {
 	require.NoError(t, err)
 
 	got := res.Results
-	assert.NotZero(t, len(got))
+	assert.NotEmpty(t, got)
 
 	for _, flag := range got {
 		assert.Equal(t, s.namespace, flag.NamespaceKey)

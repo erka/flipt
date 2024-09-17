@@ -37,7 +37,7 @@ func TestNullableTimestamp_Scan(t *testing.T) {
 	nts := NullableTimestamp{}
 
 	err := nts.Scan(nil)
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 
 	rt, _ := time.Parse(time.RFC3339, "1970-01-01T00:00:00Z")
 	err = nts.Scan(rt)
@@ -89,6 +89,6 @@ func TestJSONField_Value(t *testing.T) {
 	assert.NoError(t, err)
 
 	if b, ok := b.([]byte); ok {
-		assert.Equal(t, string(b), `{"hello":"world"}`)
+		assert.Equal(t, `{"hello":"world"}`, string(b))
 	}
 }
