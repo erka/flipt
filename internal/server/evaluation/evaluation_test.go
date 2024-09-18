@@ -729,8 +729,8 @@ func TestBatch_UnknownFlagType(t *testing.T) {
 		},
 	})
 
-	assert.Error(t, err)
-	assert.EqualError(t, err, "unknown flag type: 3")
+	require.Error(t, err)
+	require.EqualError(t, err, "unknown flag type: 3")
 }
 
 func TestBatch_InternalError_GetFlag(t *testing.T) {
@@ -759,7 +759,7 @@ func TestBatch_InternalError_GetFlag(t *testing.T) {
 		},
 	})
 
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.EqualError(t, err, "internal error")
 }
 

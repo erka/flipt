@@ -60,15 +60,15 @@ func TestDelete(t *testing.T) {
 	require.NoError(t, err)
 
 	v, ok, err := c.Get(ctx, "key")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.True(t, ok)
 	assert.Equal(t, []byte("value"), v)
 
 	err = c.Delete(ctx, "key")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	v, ok, err = c.Get(ctx, "key")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.False(t, ok)
 	assert.Nil(t, v)
 }

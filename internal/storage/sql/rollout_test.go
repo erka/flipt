@@ -563,7 +563,7 @@ func (s *DBTestSuite) TestUpdateRollout() {
 	assert.Equal(t, int32(1), rollout.Rank)
 	assert.Equal(t, flipt.RolloutType_SEGMENT_ROLLOUT_TYPE, rollout.Type)
 	assert.Equal(t, segmentOne.Key, rollout.GetSegment().SegmentKey)
-	assert.Equal(t, true, rollout.GetSegment().Value)
+	assert.True(t, rollout.GetSegment().Value)
 	assert.NotZero(t, rollout.CreatedAt)
 	assert.Equal(t, rollout.CreatedAt.Seconds, rollout.UpdatedAt.Seconds)
 	assert.Equal(t, flipt.SegmentOperator_OR_SEGMENT_OPERATOR, rollout.GetSegment().SegmentOperator)
@@ -650,7 +650,7 @@ func (s *DBTestSuite) TestUpdateRollout_OneSegment() {
 	assert.Equal(t, flipt.RolloutType_SEGMENT_ROLLOUT_TYPE, rollout.Type)
 	assert.Contains(t, rollout.GetSegment().SegmentKeys, segmentOne.Key)
 	assert.Contains(t, rollout.GetSegment().SegmentKeys, segmentTwo.Key)
-	assert.Equal(t, true, rollout.GetSegment().Value)
+	assert.True(t, rollout.GetSegment().Value)
 	assert.NotZero(t, rollout.CreatedAt)
 	assert.Equal(t, rollout.CreatedAt.Seconds, rollout.UpdatedAt.Seconds)
 	assert.Equal(t, flipt.SegmentOperator_AND_SEGMENT_OPERATOR, rollout.GetSegment().SegmentOperator)
@@ -717,8 +717,8 @@ func (s *DBTestSuite) TestUpdateRolloutNamespace() {
 	assert.Equal(t, flag.Key, rollout.FlagKey)
 	assert.Equal(t, int32(1), rollout.Rank)
 	assert.Equal(t, flipt.RolloutType_THRESHOLD_ROLLOUT_TYPE, rollout.Type)
-	assert.Equal(t, float32(40), rollout.GetThreshold().Percentage)
-	assert.Equal(t, true, rollout.GetThreshold().Value)
+	assert.InDelta(t, 40, rollout.GetThreshold().Percentage, 0)
+	assert.True(t, rollout.GetThreshold().Value)
 	assert.NotZero(t, rollout.CreatedAt)
 	assert.Equal(t, rollout.CreatedAt.Seconds, rollout.UpdatedAt.Seconds)
 
@@ -743,8 +743,8 @@ func (s *DBTestSuite) TestUpdateRolloutNamespace() {
 	assert.Equal(t, "foobar", updated.Description)
 	assert.Equal(t, int32(1), updated.Rank)
 	assert.Equal(t, flipt.RolloutType_THRESHOLD_ROLLOUT_TYPE, updated.Type)
-	assert.Equal(t, float32(80), updated.GetThreshold().Percentage)
-	assert.Equal(t, false, updated.GetThreshold().Value)
+	assert.InDelta(t, 80, updated.GetThreshold().Percentage, 0)
+	assert.False(t, updated.GetThreshold().Value)
 	assert.NotZero(t, updated.CreatedAt)
 	assert.NotZero(t, updated.UpdatedAt)
 }
@@ -794,7 +794,7 @@ func (s *DBTestSuite) TestUpdateRollout_InvalidType() {
 	assert.Equal(t, int32(1), rollout.Rank)
 	assert.Equal(t, flipt.RolloutType_SEGMENT_ROLLOUT_TYPE, rollout.Type)
 	assert.Equal(t, "segment_one", rollout.GetSegment().SegmentKey)
-	assert.Equal(t, true, rollout.GetSegment().Value)
+	assert.True(t, rollout.GetSegment().Value)
 	assert.NotZero(t, rollout.CreatedAt)
 	assert.Equal(t, rollout.CreatedAt.Seconds, rollout.UpdatedAt.Seconds)
 
@@ -908,7 +908,7 @@ func (s *DBTestSuite) TestDeleteRollout() {
 
 	got := res.Results
 	assert.NotNil(t, got)
-	assert.Equal(t, 2, len(got))
+	assert.Len(t, got, 2)
 	assert.Equal(t, rollouts[0].Id, got[0].Id)
 	assert.Equal(t, int32(1), got[0].Rank)
 	assert.Equal(t, storage.DefaultNamespace, got[0].NamespaceKey)
@@ -968,7 +968,7 @@ func (s *DBTestSuite) TestDeleteRolloutNamespace() {
 
 	got := res.Results
 	assert.NotNil(t, got)
-	assert.Equal(t, 2, len(got))
+	assert.Len(t, got, 2)
 	assert.Equal(t, rollouts[0].Id, got[0].Id)
 	assert.Equal(t, int32(1), got[0].Rank)
 	assert.Equal(t, s.namespace, got[0].NamespaceKey)
@@ -1078,7 +1078,7 @@ func (s *DBTestSuite) TestOrderRollouts() {
 	require.NoError(t, err)
 	got := res.Results
 	assert.NotNil(t, got)
-	assert.Equal(t, 3, len(got))
+	assert.Len(t, got, 3)
 
 	assert.Equal(t, rollouts[0].Id, got[0].Id)
 	assert.Equal(t, int32(1), got[0].Rank)
@@ -1152,7 +1152,7 @@ func (s *DBTestSuite) TestOrderRolloutsNamespace() {
 	require.NoError(t, err)
 	got := res.Results
 	assert.NotNil(t, got)
-	assert.Equal(t, 3, len(got))
+	assert.Len(t, got, 3)
 
 	assert.Equal(t, rollouts[0].Id, got[0].Id)
 	assert.Equal(t, int32(1), got[0].Rank)

@@ -570,13 +570,13 @@ func (s *DBTestSuite) TestGetEvaluationDistributions_MaintainOrder() {
 	assert.Equal(t, rule.Id, evaluationDistributions[0].RuleID)
 	assert.Equal(t, variant1.Id, evaluationDistributions[0].VariantID)
 	assert.Equal(t, variant1.Key, evaluationDistributions[0].VariantKey)
-	assert.Equal(t, float32(80.00), evaluationDistributions[0].Rollout)
+	assert.InDelta(t, 80.00, evaluationDistributions[0].Rollout, 0)
 
 	assert.NotEmpty(t, evaluationDistributions[1].ID)
 	assert.Equal(t, rule.Id, evaluationDistributions[1].RuleID)
 	assert.Equal(t, variant2.Id, evaluationDistributions[1].VariantID)
 	assert.Equal(t, variant2.Key, evaluationDistributions[1].VariantKey)
-	assert.Equal(t, float32(20.00), evaluationDistributions[1].Rollout)
+	assert.InDelta(t, 20.00, evaluationDistributions[1].Rollout, 0)
 
 	// update dist1 with same values
 	_, err = s.store.UpdateDistribution(context.TODO(), &flipt.UpdateDistributionRequest{
@@ -612,13 +612,13 @@ func (s *DBTestSuite) TestGetEvaluationDistributions_MaintainOrder() {
 	assert.Equal(t, rule.Id, evaluationDistributions[0].RuleID)
 	assert.Equal(t, variant1.Id, evaluationDistributions[0].VariantID)
 	assert.Equal(t, variant1.Key, evaluationDistributions[0].VariantKey)
-	assert.Equal(t, float32(80.00), evaluationDistributions[0].Rollout)
+	assert.InDelta(t, 80.00, evaluationDistributions[0].Rollout, 0)
 
 	assert.NotEmpty(t, evaluationDistributions[1].ID)
 	assert.Equal(t, rule.Id, evaluationDistributions[1].RuleID)
 	assert.Equal(t, variant2.Id, evaluationDistributions[1].VariantID)
 	assert.Equal(t, variant2.Key, evaluationDistributions[1].VariantKey)
-	assert.Equal(t, float32(20.00), evaluationDistributions[1].Rollout)
+	assert.InDelta(t, 20.00, evaluationDistributions[1].Rollout, 0)
 }
 
 func (s *DBTestSuite) TestGetEvaluationRollouts() {
@@ -677,7 +677,7 @@ func (s *DBTestSuite) TestGetEvaluationRollouts() {
 	assert.Equal(t, "default", evaluationRollouts[0].NamespaceKey)
 	assert.Equal(t, int32(1), evaluationRollouts[0].Rank)
 	assert.NotNil(t, evaluationRollouts[0].Threshold)
-	assert.Equal(t, float32(50.0), evaluationRollouts[0].Threshold.Percentage)
+	assert.InDelta(t, 50.0, evaluationRollouts[0].Threshold.Percentage, 0)
 	assert.False(t, evaluationRollouts[0].Threshold.Value, "percentage value is false")
 
 	assert.Equal(t, "default", evaluationRollouts[1].NamespaceKey)
@@ -766,7 +766,7 @@ func (s *DBTestSuite) TestGetEvaluationRollouts_NoNamespace() {
 	assert.Equal(t, "default", evaluationRollouts[0].NamespaceKey)
 	assert.Equal(t, int32(1), evaluationRollouts[0].Rank)
 	assert.NotNil(t, evaluationRollouts[0].Threshold)
-	assert.Equal(t, float32(50.0), evaluationRollouts[0].Threshold.Percentage)
+	assert.InDelta(t, 50.0, evaluationRollouts[0].Threshold.Percentage, 0)
 	assert.False(t, evaluationRollouts[0].Threshold.Value, "percentage value is false")
 
 	assert.Equal(t, "default", evaluationRollouts[1].NamespaceKey)
@@ -778,7 +778,7 @@ func (s *DBTestSuite) TestGetEvaluationRollouts_NoNamespace() {
 	assert.Len(t, evaluationRollouts[1].Segment.Segments[firstSegment.Key].Constraints, 1)
 
 	assert.Equal(t, secondSegment.Key, evaluationRollouts[1].Segment.Segments[secondSegment.Key].SegmentKey)
-	assert.Len(t, evaluationRollouts[1].Segment.Segments[secondSegment.Key].Constraints, 0)
+	assert.Empty(t, evaluationRollouts[1].Segment.Segments[secondSegment.Key].Constraints)
 }
 
 func (s *DBTestSuite) TestGetEvaluationRollouts_NonDefaultNamespace() {
@@ -852,7 +852,7 @@ func (s *DBTestSuite) TestGetEvaluationRollouts_NonDefaultNamespace() {
 	assert.Equal(t, s.namespace, evaluationRollouts[0].NamespaceKey)
 	assert.Equal(t, int32(1), evaluationRollouts[0].Rank)
 	assert.NotNil(t, evaluationRollouts[0].Threshold)
-	assert.Equal(t, float32(50.0), evaluationRollouts[0].Threshold.Percentage)
+	assert.InDelta(t, 50.0, evaluationRollouts[0].Threshold.Percentage, 0)
 	assert.False(t, evaluationRollouts[0].Threshold.Value, "percentage value is false")
 
 	assert.Equal(t, s.namespace, evaluationRollouts[1].NamespaceKey)
