@@ -395,12 +395,14 @@ export default function QuickEditRuleForm(props: QuickEditRuleFormProps) {
             <div className="shrink-0 py-1">
               <div className="space-x flex justify-end">
                 <TextButton
+                  aria-role="button"
                   disabled={formik.isSubmitting || !formik.dirty}
                   onClick={() => formik.resetForm()}
                 >
                   Reset
                 </TextButton>
                 <TextButton
+                  aria-role="button"
                   type="submit"
                   className="min-w-[80px]"
                   disabled={
